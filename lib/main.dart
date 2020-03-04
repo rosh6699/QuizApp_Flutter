@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'quizbrain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
+QuizBrain quizBrain = QuizBrain();
 void main() => runApp(Quizzler());
 
 class Quizzler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        appBar: AppBar(
+          title: Text('Quiz App',style: TextStyle(color: Colors.grey),),
+          backgroundColor: Colors.grey.shade900,
+        ),
+        backgroundColor: Colors.black,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
@@ -25,6 +33,55 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Widget> scoreKeeper = [];
+  void checkAnswer(bool userPickedAnswer) {
+    bool correctAnswer = quizBrain.getQuestionAnswer();
+
+    setState(() {
+      if (quizBrain.isFinished() != true) {
+        if (correctAnswer == userPickedAnswer) {
+          quizBrain.incrementScore();
+          print("User got it right");
+          scoreKeeper.add(Icon(Icons.check, color: Colors.green));
+        } else {
+          print("User got it wrong");
+          scoreKeeper.add(Icon(Icons.close, color: Colors.red));
+        }
+
+        quizBrain.nextQuestion();
+      } else {
+        if (correctAnswer == userPickedAnswer) {
+          quizBrain.incrementScore();
+          print("User got it right");
+          scoreKeeper.add(Icon(Icons.check, color: Colors.green));
+        } else {
+          print("User got it wrong");
+          scoreKeeper.add(Icon(Icons.close, color: Colors.red));
+        }
+
+        var score = (quizBrain.getScore());
+        Alert(
+            context: context,
+            title: "Quiz Over",
+            desc: "Your Score",
+            content: Text('$score'),
+            buttons: [
+              DialogButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Retake Quiz",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              )
+            ]).show();
+
+        quizBrain.reset();
+
+        scoreKeeper = [];
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +94,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -61,6 +118,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
+                checkAnswer(true);
                 //The user picked true.
               },
             ),
@@ -80,11 +138,19 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                checkAnswer(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Container(
+          height: 40,
+          padding: EdgeInsets.symmetric(horizontal: 15.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: scoreKeeper,
+          ),
+        )
       ],
     );
   }
